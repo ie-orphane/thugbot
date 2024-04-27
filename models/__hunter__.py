@@ -1,4 +1,5 @@
 import json
+import os
 from models.__schema__ import Collection
 from datetime import datetime, UTC
 
@@ -13,6 +14,11 @@ class HunterData(Collection):
     streak: dict[str, int]
     created_at: datetime
 
+    def __to_dict__(self):
+        data_dict = super().__to_dict__()
+        data_dict["created_at"] = str(data_dict["created_at"])
+        return data_dict
+
     @classmethod
     def create(cls, id: int | str):
         data = cls(
@@ -24,6 +30,7 @@ class HunterData(Collection):
             streak={"interaction": 0, "Topgg": 0, "DiscordBotList": 0},
             created_at=datetime.now(UTC),
         )
+        os.mkdir(f"./data/card/{id}")
         return data.update()
 
     @classmethod
@@ -45,7 +52,7 @@ class HunterData(Collection):
         self.update()
 
     def required_xp(self):
-        """ calculate the required amount of xp """
-        old = 0 if self.level == 0 else int((2 * (self.level - 1) + 1) * 10 ** 2 * 0.69)
-        reXP = (2 * self.level + 1) * 10 ** 2 + old
+        """calculate the required amount of xp"""
+        old = 0 if self.level == 0 else int((2 * (self.level - 1) + 1) * 10**2 * 0.69)
+        reXP = (2 * self.level + 1) * 10**2 + old
         return reXP

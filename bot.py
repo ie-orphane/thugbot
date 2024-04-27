@@ -48,7 +48,7 @@ class Bot(commands.Bot):
         initial_extensions = [
             "cogs." + command_file[:-3]
             for command_file in os.listdir("cogs")
-            if command_file not in ["__pycache__", "__init__.py"]
+            if command_file not in ["__pycache__", "__init__.py", "__schema__.py"]
         ]
 
         for extension in initial_extensions:
@@ -67,15 +67,17 @@ class Bot(commands.Bot):
         if message.content.startswith(self.user.mention):
             await message.channel.send("I'm here!")
 
+def main():
+    locale.setlocale(locale.LC_ALL, "fr_FR.UTF-8")
+    load_dotenv()
+    TOKEN = os.getenv("TOKEN")
 
-locale.setlocale(locale.LC_ALL, "fr_FR.UTF-8")
-load_dotenv()
-TOKEN = os.getenv("TOKEN")
-
-
-if __name__ == "__main__":
     bot = Bot()
     if TOKEN:
         bot.run(TOKEN)
     else:
         bot.log("Error", "Bot", ".env missed TOKEN")
+
+if __name__ == "__main__":
+    # from test.main import main
+    main()

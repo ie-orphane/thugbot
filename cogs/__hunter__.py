@@ -1,25 +1,10 @@
 import discord
-import traceback
 from discord.ext import commands
 from models import Emoji
 from typing import Optional
-from datetime import datetime, UTC, timedelta
+from datetime import datetime, UTC
 from models import HunterData
-
-
-def format_timedelta(delta: timedelta) -> str:
-    """Formats a timedelta duration to [N days] %H:%M:%S format"""
-    seconds = delta.seconds
-
-    days, seconds = divmod(seconds, 86_400)
-    hours, seconds = divmod(seconds, 3_600)
-    minutes, seconds = divmod(seconds, 60)
-
-    days = f"{days} day{'s' if days > 1 else ''} " if days > 0 else ""
-    hours = f"{hours:02d}:" if hours > 0 else ""
-    minutes = f"{minutes:02d}:" if minutes > 0 else ""
-
-    return f"{days}{hours}{minutes}{seconds:02d}.{delta.microseconds}"
+from cogs.__schema__ import Cog
 
 
 def HunterEmbed(
@@ -41,20 +26,15 @@ def HunterEmbed(
     ).set_author(name=f"{member}", icon_url=member.avatar)
 
 
-class Hunter(commands.Cog):
-    def __init__(self, bot: commands.Bot):
-        self.bot = bot
-
+class Hunter(Cog):
     @discord.app_commands.command(description="Get information about a Thug Hunter")
     async def hunter(
         self, interaction: discord.Interaction, member: Optional[discord.Member] = None
     ):
         try:
             await interaction.response.defer()
-            self.bot.log(
-                "Cog", "Balance", f"used from {interaction.user} {interaction.guild}"
-            )
-            Time = datetime.now(UTC)
+            start_time = datetime.now(UTC)
+            self.start(start_time, interaction)
             member = member or interaction.user
             if member.id == 1063459223289200652:
                 await interaction.followup.send(embed=HunterEmbed(member=member))
@@ -74,30 +54,9 @@ class Hunter(commands.Cog):
                     )
                 )
         except Exception as e:
-            trace_back = list(traceback.extract_tb(e.__traceback__)[0])
-            await self.bot.get_channel(1233741067048714261).send(
-                content=f"```{trace_back[0]}\n  {e.__traceback__.tb_lineno}\t{trace_back[-1]}\n{e.__class__.__name__}: {e}```"
-            )
+            self.error(e)
         else:
-            if interaction.user.id != 896071246519869450:
-                time = format_timedelta(datetime.now(UTC) - Time)
-                hunter.interaction("balance")
-                await self.bot.get_channel(1233741040108961833).send(
-                    embed=discord.Embed(
-                        color=discord.Color.green(),
-                        description=(
-                            f"<t:{int(Time.timestamp())}:F> | **{time}**"
-                            f"\n{interaction.channel} | {interaction.guild}"
-                        ),
-                    )
-                    .set_author(name=interaction.user, icon_url=interaction.user.avatar)
-                    .set_footer(text=interaction.user.id)
-                )
-                self.bot.log(
-                    "Cog",
-                    "Balance",
-                    f"{interaction.user} done in {time}",
-                )
+            await self.done(interaction, start_time)
 
 
 #       ranks, userData = rank(id_=member.id), dt(member.id)
