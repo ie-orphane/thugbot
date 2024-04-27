@@ -75,3 +75,30 @@ class Collection(Model):
     def delete(self):
         os.remove(f"./data/{self.BASE}/{self.id}.json")
         return self
+
+
+class Directory(Model):
+    def __to_dict__(self):
+        return {key: value for key, value in self.__dict__.items() if key in self.KEYS}
+
+    @classmethod
+    def read(cls, _id: int | str, id: int | str):
+        try:
+            with open(f"./data/{cls.BASE}/{_id}/{id}.json", "r") as file:
+                return cls(_id=int(_id), id=int(id), **json.load(file))
+        except FileNotFoundError:
+            return None
+
+    @classmethod
+    def read_all(cls, _id):
+        files = os.listdir(f"./data/{cls.BASE}/{_id}")
+        ids = [file[: file.index(".")] for file in files]
+        return [cls.read(_id, id) for id in ids]
+
+    def update(self):
+        with open(f"./data/{self.BASE}/{self._id}/{self.id}.json", "r") as file:
+            json.dump(self, file, cls=ModelEncoder, indent=2)
+
+    def delete(self):
+        os.remove(f"./data/{self.BASE}/{self._id}/{self.id}.json")
+        return self

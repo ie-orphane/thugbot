@@ -1,2 +1,2 @@
-FOLDERS=()
-FILES=()
+FOLDERS=("card" "hunter")
+FILES=("thugs" "extras")
