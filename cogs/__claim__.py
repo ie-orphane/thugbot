@@ -29,9 +29,9 @@ class Claim(Cog):
     async def claim(self, interaction: discord.Interaction):
         try:
             await interaction.response.defer()
-            start_time = datetime.now(UTC)
-            self.start(start_time, interaction)
-            # member = member or interaction.user
+            self.interaction = interaction
+            self.start()
+
             # if member.id == 1063459223289200652:
             #     await interaction.followup.send(embed=HunterEmbed(member=member))
             # elif error_embed := self.bot.check_hunter(member, interaction):
@@ -50,9 +50,9 @@ class Claim(Cog):
             #         )
             #     )
         except Exception as e:
-            self.error(e)
+            await self.error(e)
         else:
-            await self.log(interaction, start_time)
+            await self.done()
 
 
 async def setup(bot: commands.Bot):

@@ -6,6 +6,9 @@ from utils import clr
 
 
 class Cog(commands.Cog):
+    interaction: discord.Interaction
+    start_time: datetime
+
     def __init__(self, bot: commands.Bot):
         self.bot = bot
 
@@ -29,35 +32,36 @@ class Cog(commands.Cog):
             content=f"```{trace_back[0]}\n  {exception.__traceback__.tb_lineno}\t{trace_back[-1]}\n{exception.__class__.__name__}: {exception}```"
         )
 
-    def start(self, time: datetime, interaction: discord.Interaction):
+    def start(self):
+        self.start_time = datetime.now(UTC)
         print(
-            f"{clr.black(time.strftime("%Y-%m-%d %H:%M:%S"))} {clr.green("Cog")}     ",
-            f"{clr.magenta(self.qualified_name)} used from {interaction.user} {interaction.guild}"
+            f"{clr.black(self.start_time.strftime("%Y-%m-%d %H:%M:%S"))} {clr.green("Cog")}     ",
+            f"{clr.magenta(self.qualified_name)} used from {self.interaction.user} {self.interaction.guild}"
         )
 
-    async def done(self, interaction: discord.Interaction, Time: datetime):
-        if interaction.user.id != 89607124651986945:
-            end_time = datetime.now(UTC) - Time
-            formated_end_time = self.format_timedelta(datetime.now(UTC) - Time)
+    async def done(self):
+        if self.interaction.user.id != 89607124651986945:
+            end_time = datetime.now(UTC) - self.start_time
+            formated_end_time = self.format_timedelta(datetime.now(UTC) - self.start_time)
 
             with open("./data/interactions.csv", "a") as file:
                 file.write(
-                    f"\n{Time},{interaction.user.id},{self.qualified_name},{end_time.total_seconds()}"
+                    f"\n{self.start_time},{self.interaction.user.id},{self.qualified_name},{end_time.total_seconds()}"
                 )
 
             # await self.bot.get_channel(1233741040108961833).send(
             #     embed=discord.Embed(
             #         color=discord.Color.green(),
             #         description=(
-            #             f"<t:{int(Time.timestamp())}:F> | **{formated_end_time}**"
-            #             f"\n{interaction.channel} | {interaction.guild}"
+            #             f"<t:{int(self.start_time.timestamp())}:F> | **{formated_end_time}**"
+            #             f"\n{self.interaction.channel} | {self.interaction.guild}"
             #         ),
             #     )
-            #     .set_author(name=interaction.user, icon_url=interaction.user.avatar)
-            #     .set_footer(text=interaction.user.id)
+            #     .set_author(name=self.interaction.user, icon_url=self.interaction.user.avatar)
+            #     .set_footer(text=self.interaction.user.id)
             # )
 
             print(
                 f"{clr.black(datetime.now(UTC).strftime("%Y-%m-%d %H:%M:%S"))} {clr.green("Cog")}     ",
-                f"{clr.magenta(self.qualified_name)} {interaction.user} done in {formated_end_time}"
+                f"{clr.magenta(self.qualified_name)} {self.interaction.user} done in {formated_end_time}"
             )

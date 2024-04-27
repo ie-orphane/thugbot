@@ -2,7 +2,6 @@ import discord
 from discord.ext import commands
 from models import Emoji
 from typing import Optional
-from datetime import datetime, UTC
 from models import HunterData
 from cogs.__schema__ import Cog
 
@@ -33,9 +32,10 @@ class Hunter(Cog):
     ):
         try:
             await interaction.response.defer()
-            start_time = datetime.now(UTC)
-            self.start(start_time, interaction)
+            self.interaction = interaction
+            self.start()
             member = member or interaction.user
+
             if member.id == 1063459223289200652:
                 await interaction.followup.send(embed=HunterEmbed(member=member))
             elif error_embed := self.bot.check_hunter(member, interaction):
@@ -54,16 +54,9 @@ class Hunter(Cog):
                     )
                 )
         except Exception as e:
-            self.error(e)
+            await self.error(e)
         else:
-            await self.done(interaction, start_time)
-
-
-#       ranks, userData = rank(id_=member.id), dt(member.id)
-#       for name, value in [
-#         ("<:rank:1092956484729573450> Rank", f"<:reply:1089853197516029994> Gang: {ranks[1]}\n<:reply:1089853197516029994> Wealth: {ranks[0]}\n<:reply:1089853197516029994> StreetFight: {ranks[2]}\n<:reply:1089853197516029994> VoteStreak: {ranks[3]}")
-#       ]:
-#         hunterEmbed.add_field(name=name, value=f">>> {value}", inline=name != "<:rank:1092956484729573450> Rank")
+            await self.done()
 
 
 async def setup(bot: commands.Bot):
