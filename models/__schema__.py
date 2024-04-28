@@ -96,8 +96,9 @@ class Directory(Model):
         return [cls.read(_id, id) for id in ids]
 
     def update(self):
-        with open(f"./data/{self.BASE}/{self._id}/{self.id}.json", "r") as file:
+        with open(f"./data/{self.BASE}/{self._id}/{self.id}.json", "w") as file:
             json.dump(self, file, cls=ModelEncoder, indent=2)
+        return self
 
     def delete(self):
         os.remove(f"./data/{self.BASE}/{self._id}/{self.id}.json")

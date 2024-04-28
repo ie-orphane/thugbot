@@ -1,54 +1,40 @@
 import discord
 from discord.ext import commands
-from models import Emoji
-from datetime import datetime, UTC
 from models import HunterData
-from cogs.__schema__ import Cog
-
-# def HunterEmbed(
-#     member: discord.Member | discord.User,
-#     highLevel: bool = True,
-#     level: str | int = "***\u221E***",
-#     xp: str = "***\u221E***",
-#     coins: str = "***\u221E***",
-#     stars: str = "***\u221E***",
-# ):
-#     return discord.Embed(
-#         color=discord.Color.dark_blue(),
-#         description=(
-#             f"{Emoji.highLevel if highLevel else Emoji.level} Level\u1CBC:\u1CBC{level}\n"
-#             f"{Emoji.xp} XP{'\u1CBC'*3}:\u1CBC{xp}"
-#             f"\n{Emoji.star} Stars\u1CBC:\u1CBC{stars}"
-#             f"\n{Emoji.coin} Coins\u1CBC:\u1CBC{coins}"
-#         ),
-#     ).set_author(name=f"{member}", icon_url=member.avatar)
+from cogs import Cog
 
 
 class Claim(Cog):
-    @discord.app_commands.command(description="Get information about a Thug Hunter")
+    @discord.app_commands.command(description="Get a new thug for your gang")
     async def claim(self, interaction: discord.Interaction):
         try:
             await interaction.response.defer()
             self.interaction = interaction
             self.start()
 
-            # if member.id == 1063459223289200652:
-            #     await interaction.followup.send(embed=HunterEmbed(member=member))
-            # elif error_embed := self.bot.check_hunter(member, interaction):
-            #     await interaction.followup.send(embed=error_embed)
-            # else:
-            #     hunter = HunterData.read(member.id) or HunterData.create(member.id)
+            hunter = HunterData.read(interaction.user.id) or HunterData.create(
+                interaction.user.id
+            )
+            onCooldown, time = hunter.check_cooldown("claim")
 
-            #     await interaction.followup.send(
-            #         embed=HunterEmbed(
-            #             member=member,
-            #             highLevel=hunter.level >= 69,
-            #             level=f"**{hunter.level:n}**",
-            #             xp=f"**{hunter.xp:n}** / {hunter.required_xp():n}",
-            #             coins=f"**{hunter.coin:n}**",
-            #             stars=f"**{hunter.star:n}**",
-            #         )
-            #     )
+            if onCooldown:
+                await interaction.followup.send(
+                    embed=discord.Embed(
+                        color=discord.Color.red(),
+                        description=f"{interaction.user.mention}\nYou are on cooldown for this command!\nNext available in {time}",
+                    ),
+                    ephemeral=True,
+                )
+
+            else:
+                card = hunter.claim_thug()
+                await interaction.followup.send(
+                    file=discord.File(fp=card.thug.path, filename=card.thug.file_name),
+                    embed=discord.Embed(
+                        color=card.color,
+                        description=f"**{card.thug.name}** joins your gang",
+                    ).set_image(url=f"attachment://{card.thug.file_name}"),
+                )
         except Exception as e:
             await self.error(e)
         else:

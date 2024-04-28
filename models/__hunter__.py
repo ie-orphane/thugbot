@@ -1,7 +1,9 @@
-import json
 import os
-from models.__schema__ import Collection
-from datetime import datetime, UTC
+import json
+import random
+from typing import Literal
+from models import Collection, CardData, ThugData
+from datetime import datetime, UTC, timedelta
 
 
 class HunterData(Collection):
@@ -16,7 +18,8 @@ class HunterData(Collection):
 
     def __to_dict__(self):
         data_dict = super().__to_dict__()
-        data_dict["created_at"] = str(data_dict["created_at"])
+        if data_dict["created_at"] != None:
+            data_dict["created_at"] = str(data_dict["created_at"])
         return data_dict
 
     @classmethod
@@ -56,3 +59,72 @@ class HunterData(Collection):
         old = 0 if self.level == 0 else int((2 * (self.level - 1) + 1) * 10**2 * 0.69)
         reXP = (2 * self.level + 1) * 10**2 + old
         return reXP
+
+    def check_cooldown(self, label: Literal["claim"]):
+        if self.cooldowns[label] != None:
+            available_time = datetime.fromisoformat(self.cooldowns[label]) + timedelta(
+                seconds={
+                    "claim": 3_600,
+                    "streetfight": 3_600,
+                    "hangthug": 5_400,
+                    "pvb": 5_400,
+                    "tictugtoe": 5_400,
+                    "guesscountry": 5_400,
+                    "sudoku": 5_400,
+                    "thuggame": 1_800,
+                    "shop": 43_200,
+                    "Topgg": 43_200,
+                    "DiscordBotList": 43_200,
+                    "collect": 86_400,
+                }[label]
+            )
+            if not available_time < datetime.now(UTC):
+                cooldown_time = str(available_time - datetime.now(UTC)).split(".")[0]
+                self.update()
+                return True, f"**{cooldown_time}** <a:clock:1089855473672536064>"
+
+        self.cooldowns[label] = str(datetime.now(UTC))
+        return False, None
+
+    def claim_thug(self) -> CardData:
+        claim_list = []
+        for index, thug in enumerate(ThugData.read_all()):
+            thug_card = CardData.read(_id=self.id, id=index)
+            fac = 100 if thug_card is None else thug_card.factor
+            for _ in range(fac):
+                claim_list.append((index, thug, thug_card))
+        random.shuffle(claim_list)
+        thug_id, thug, card = random.choice(claim_list)
+
+        if card is None:
+            card = CardData(
+                _id=self.id, id=thug_id, level=0, amount=0, power=thug.power
+            )
+            self.star += 3
+        else:
+            card.amount += 1
+            self.star += 1
+        self.update()
+        return card.update()
+
+    @property
+    def gang(self):
+        class Gang:
+            total = 0
+            collected = 0
+            x = 0
+            all: dict[str, list[CardData]] = {}
+            value = 0
+
+        for card in CardData.read_all(self.id):
+            amount = card.amount + card.level * card.cards
+            Gang.total += amount
+            if card.thug.exclusive:
+                Gang.x += 1
+            else:
+                Gang.collected += 1
+            Gang.value += card.thug.value * amount
+            Gang.all.setdefault(card.rarity, [])
+            Gang.all[card.rarity].append(card)
+
+        return Gang

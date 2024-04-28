@@ -3,7 +3,7 @@ from discord.ext import commands
 from models import Emoji
 from typing import Optional
 from models import HunterData
-from cogs.__schema__ import Cog
+from cogs import Cog
 
 
 def HunterEmbed(

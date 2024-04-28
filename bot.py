@@ -58,7 +58,7 @@ class Bot(commands.Bot):
         self.log("Info", "Cogs", f"{len(sync)} Slash Command(s) Synced")
 
     async def on_ready(self):
-        self.log("Info", "Bot", f"Logged in as {self.user}")
+        self.log("Info", "Bot", f"Logged in as {self.user} in {len(self.guilds)} guild(s)")
 
     async def on_message(self, message: discord.Message):
         if message.author == self.user:
